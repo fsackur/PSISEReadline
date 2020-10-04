@@ -8,10 +8,10 @@ I still use ISE because it's great for debugging and quick edits, so: this is my
 
 # Usage
 
-Dot-source the script in ISE:
+Run this command, e.g. in your profile:
 
 ``` powershell
-. .\PSISEReadline.ps1
+Register-PSISEReadlineShortcut
 ```
 
 This adds `Ctrl-E` as a keyboard shortcut. (`Ctrl-R` is taken already.)
