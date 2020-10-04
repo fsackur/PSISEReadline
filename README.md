@@ -4,4 +4,16 @@
 
 However, it is not supported, and will not import, in ISE. (See: https://github.com/PowerShell/PSReadLine/issues/401)
 
-I still use ISE because it's great for debugging and quick edits, so: this is my implementation of bck-i-search for ISE.
+I still use ISE because it's great for debugging and quick edits, so: this is my approximate implementation of bck-i-search for ISE.
+
+# Usage
+
+Dot-source the script in ISE:
+
+``` powershell
+. .\PSISEReadline.ps1
+```
+
+This adds `Ctrl-E` as a keyboard shortcut. (`Ctrl-R` is taken already.)
+
+Hitting `Ctrl-E` will start bck-i-search. You can enter a substring and use tab-completion to search back in your command history. When you press `Enter`, the commandline will be invoked.
