@@ -13,22 +13,42 @@ function bck-i-search
 }
 
 
+#region Bind ISE shortcut
+$Shortcut = "Ctrl+E"
+$MenuItemName = "bck-i-search"
+# place text in the input buffer, ready for tab-completion
+$Action = {
+    $psISE.CurrentPowerShellTab.ConsolePane.InputText = "bck-i-search "
+}
+
+
+# Clear existing entries of our command
+$SubMenus = $psISE.CurrentPowerShellTab.AddOnsMenu.Submenus
+[void]$SubMenus.Where({$_.DisplayName -eq $MenuItemName}).ForEach({$SubMenus.Remove($_)})
+
+
+# We need a menu entry to bind a shortcut
 try
 {
-    # We need a menu entry to bind a shortcut
     [void]$psISE.CurrentPowerShellTab.AddOnsMenu.Submenus.Add(
-        "bck-i-search",
-        {
-            # Action: place text in the input buffer, ready for tab-completion
-            $psISE.CurrentPowerShellTab.ConsolePane.InputText = 'bck-i-search '
-        },
-        "Ctrl+E"
+        $MenuItemName,
+        $Action,
+        $Shortcut
     )
 }
 catch
 {
-    if ($_ -notmatch "uses shortcut '.*', which is already in use")
+    if ($_ -match "uses shortcut '.*', which is already in use")
+    {
+        Write-Warning "Failed to bind '$Shortcut' to bck-i-search; already in use."
+    }
+    else
     {
         throw
     }
 }
+
+# Cleanup, since we're expecting to be dot-sourced
+Remove-Variable Action, Shortcut, MenuItemName, SubMenus
+
+#endregion Bind ISE shortcut
