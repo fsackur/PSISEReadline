@@ -1,6 +1,6 @@
 function Register-PSISEReadlineSearchCompleter
 {
-    Register-ArgumentCompleter -CommandName bck-i-search -ParameterName SearchString -ScriptBlock {
+    Register-ArgumentCompleter -CommandName Invoke-PSISEReadline -ParameterName SearchString -ScriptBlock {
         param
         (
             $commandName,

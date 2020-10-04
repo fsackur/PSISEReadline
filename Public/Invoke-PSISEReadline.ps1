@@ -1,4 +1,4 @@
-function bck-i-search
+function Invoke-PSISEReadline
 {
     [CmdletBinding()]
     param

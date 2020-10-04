@@ -20,6 +20,9 @@
 
     FunctionsToExport    = @(
         'Register-PSISEReadlineShortcut',
+        'Invoke-PSISEReadline'      # Use the alias, though
+    )
+    AliasesToExport = @(
         'bck-i-search'
     )
 
