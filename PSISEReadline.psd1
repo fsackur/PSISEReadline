@@ -18,7 +18,10 @@
     RootModule           = 'PSISEReadline.psm1'
 
 
-    FunctionsToExport    = @('*')
+    FunctionsToExport    = @(
+        'Register-PSISEReadlineShortcut',
+        'bck-i-search'
+    )
 
 
     PrivateData          = @{
