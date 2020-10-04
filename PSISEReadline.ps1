@@ -1,6 +1,15 @@
 function bck-i-search
 {
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory, Position = 0)]
+        $Command,
 
+        # This is not looked at - its existence allows otherwise-syntactically-invalid input
+        [Parameter(DontShow, ValueFromRemainingArguments)]
+        $Remainder
+    )
 }
 
 
