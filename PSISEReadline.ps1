@@ -32,7 +32,7 @@ function bck-i-search
     if ($ConsoleText -match $Pattern)
     {
         $Command = $Matches[0]
-        $Command | Write-Host -ForegroundColor Green
+        # $Command | Write-Host -ForegroundColor Green
     }
     else
     {
@@ -41,6 +41,10 @@ function bck-i-search
         # Stop the pipeline
         break
     }
+
+
+    # Do the thing!
+    $Command | Invoke-Expression
 
 
     # Stop the pipeline, in case you're retrieving a commandline containing a pipe.
