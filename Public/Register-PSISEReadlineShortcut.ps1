@@ -3,9 +3,6 @@ function Register-PSISEReadlineShortcut
     $Shortcut = "Ctrl+E"
     $MenuItemName = "bck-i-search"
 
-    # place text in the input buffer, ready for tab-completion
-    $Action = {$psISE.CurrentPowerShellTab.ConsolePane.InputText = "bck-i-search "}
-
 
     # Clear existing entries of our command
     $SubMenus = $psISE.CurrentPowerShellTab.AddOnsMenu.Submenus
@@ -15,7 +12,7 @@ function Register-PSISEReadlineShortcut
     # We need a menu entry to bind a shortcut
     try
     {
-        [void]$Submenus.Add($MenuItemName, $Action, $Shortcut)
+        [void]$Submenus.Add($MenuItemName, $Script:ShortcutAction, $Shortcut)
     }
     catch
     {
