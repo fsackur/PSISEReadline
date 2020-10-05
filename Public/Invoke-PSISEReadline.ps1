@@ -32,7 +32,7 @@ function Invoke-PSISEReadline
     if ($ConsoleText -match $Pattern)
     {
         $Command = $Matches[0]
-        # $Command | Write-Host -ForegroundColor Green
+        $Command | Write-Host -ForegroundColor Green
     }
     else
     {

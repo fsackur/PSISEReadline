@@ -19,7 +19,7 @@
 
 
     FunctionsToExport    = @(
-        'Register-PSISEReadlineShortcut',
+        'Register-PSISEReadlineShortcut','*'
         'Invoke-PSISEReadline'      # Use the alias, though
     )
     AliasesToExport = @(
