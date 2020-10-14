@@ -1,10 +1,11 @@
 $Script:Action = {
 
+    Unregister-Event -SourceIdentifier PaneChanged -ErrorAction Ignore
+
     $ChangedProperty = $args[1].PropertyName
     $null = $CP.Add($ChangedProperty)
     if ($ChangedProperty -eq 'CaretLine')
     {
-        # Unregister-Event -SourceIdentifier PaneChanged
     }
 
     # $psISE.CurrentPowerShellTab.ConsolePane
@@ -34,6 +35,10 @@ $Script:Action = {
     & $MyModule {$Script:FoundCommand = $args[0]} $FoundCommand
 
     $Pane.InputText = $FoundCommand.CommandLine
+
+    $Action = & $MyModule {$Script:Action}
+
+    $null = Register-ObjectEvent -InputObject $Pane -EventName PropertyChanged -Action $Script:Action -MaxTriggerCount 1 -SourceIdentifier PaneChanged
 }
 
 
