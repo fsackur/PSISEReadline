@@ -1,124 +1,110 @@
 $Script:Action = {
 
-    Unregister-Event -SourceIdentifier PaneChanged -ErrorAction Ignore
-
-
-    # $psISE.CurrentPowerShellTab.ConsolePane
-    $Pane = $args[0]
-    $PaneType = $Pane.GetType()
-    $Field = $PaneType.GetField('inputTextBeforeExecution', 'nonpublic,instance')
-    # Input buffer before user hit the shortcut
-    $Buffer = $Field.GetValue($Pane)
-
-
     # Persist search criteria between PropertyChanged events
     $MyModule = Get-Module PSISEReadline | Select-Object -First 1
+
     (
-        $SearchString,
-        $LastFoundCommand,
-        [int]$Count,
-        $Action,
-        $LastBuffer,
-        $LastHistoryId
+        $Log,
+        $LogProps,
+        $Commands,
+        $LastHistoryId,
+        $EventSplat
 
     ) = & $MyModule {
 
-        $Script:SearchString,
-        $Script:LastFoundCommand,
-        $Script:Count,
-        $Script:Action,
-        $Script:LastBuffer,
+        $Script:Log,
+        $Script:LogProps,
+        $Script:Commands,
         $Script:LastHistoryId
+        $Script:EventSplat
     }
 
 
-    $null = $Global:Log.Add([pscustomobject]@{
-        SearchString = $SearchString
-        LastFoundCommand = $LastFoundCommand
-        Count = $Count
-        Buffer = $Buffer
-        LastBuffer = $LastBuffer
-        LastHistoryId = $LastHistoryId
-    })
-    
-    #sleep -Milliseconds 10
-    #if ((Get-History -Count 1).Id -gt $LastHistoryId) {return}
-    if ($Count -gt 1 -and -not $LastBuffer) {Write-Host "Buffer was cleared"; $Pane.InputText = ''; return}
+    $LastRun = $Log[-1]
+    $ThisRun = 1 | select $LogProps
+    $null    = $Log.Add($ThisRun)
+
+
+    Unregister-Event -SourceIdentifier $EventSplat.SourceIdentifier -ErrorAction Ignore
+
+
+    $ConsolePane    = $EventSplat.InputObject
+    $PaneType       = $ConsolePane.GetType()
+    $Field          = $PaneType.GetField('inputTextBeforeExecution', 'nonpublic,instance')
+
+    # Input buffer before user hit the shortcut
+    $ThisRun.Buffer = $Field.GetValue($ConsolePane)
+
+
+    if ($LastRun -and -not $LastRun.Buffer)
+    {
+        Write-Host "completed" -ForegroundColor Green
+        $ConsolePane.InputText = ''
+        return
+    }
 
     # Emergency bailout
-    $Count++
-    if ($Count -gt 10) {Write-Host "bailing out"; return}
+    if ($Log.Count -gt 10) {return}
 
 
-    if (-not $SearchString)
+    $ThisRun.SearchString = $LastRun.SearchString
+    if (-not $ThisRun.SearchString)
     {
-        $SearchString = $Buffer
+        $ThisRun.SearchString = $ThisRun.Buffer
     }
 
-    
-    $Commands = Get-History | 
-        sort CommandLine -Unique |
-        sort Id
-        
-    $FoundCommand = $Commands |
-        ? CommandLine -like "*$SearchString*" | 
-        Select -Last 1
 
-    
-    $TextHasChanged = $LastBuffer -ne $Buffer
-    $CommandHasChanged = $LastFoundCommand -ne $FoundCommand
-
-    # Write-Host $SearchString -ForegroundColor Yellow
-    # Write-Host $FoundCommand.CommandLine -ForegroundColor Yellow
+    $ThisRun.FoundCommand = if ($ThisRun.SearchString)
+    {
+        $Commands -like "*$($ThisRun.SearchString)*" |
+            Select -Last 1
+    }
 
 
-    
-    & $MyModule {
-
-        (
-            $Script:SearchString,
-            $Script:LastFoundCommand,
-            $Script:Count,
-            $Script:LastBuffer,
-            $Script:LastHistoryId
-        
-        ) = $args
-    
-    } $SearchString $FoundCommand $Count $Buffer $LastHistoryId
+    if ($ThisRun.FoundCommand)
+    {
+        Write-Host "here" -ForegroundColor Green
+        $ConsolePane.InputText = $ThisRun.FoundCommand.CommandLine
+    }
 
 
-    if ($Buffer -ne $FoundCommand.CommandLine)
-    {}
-    $Pane.InputText = $FoundCommand.CommandLine
-    
-
-
-    if ($TextHasChanged)
-    {}
-        
-    $null = Register-ObjectEvent -InputObject $Pane -EventName PropertyChanged -Action $Script:Action -MaxTriggerCount 1 -SourceIdentifier PaneChanged
-    
+    $null = Register-ObjectEvent @EventSplat
 }
 
 
 function bck-i-search
 {
-    #if (-not $Global:Log) {
-    $Global:Log = [System.Collections.ArrayList]::new()
+    $Script:EventSplat = @{
+        InputObject = $psISE.CurrentPowerShellTab.ConsolePane
+        EventName = 'PropertyChanged'
+        Action = $Script:Action
+        MaxTriggerCount = 1
+        SourceIdentifier = 'PaneChanged'
+    }
 
-    (
-        $Script:SearchString,
-        $Script:LastFoundCommand,
-        $Script:Count,
-        $Script:LastBuffer,
-        $Script:LastHistoryId
-        
-    ) = $null
-    
+    $Script:Log = [System.Collections.ArrayList]::new()
+    $Global:Log = $Script:Log
+    $Script:LogProps = (
+        'SearchString',
+        'FoundCommand',
+        #'Count',
+        'Buffer'
+        #'LastBuffer',
+        #'LastHistoryId',
+        #'BufferHasBeenPopulated',
+        #'BufferHasBeenCleared'
+    )
+
+    $Script:Commands = Get-History |
+        where CommandLine -notmatch 'bck-i-search' |
+        sort CommandLine -Unique |
+        sort Id
+
     $Script:LastHistoryId = (Get-History -Count 1).Id + 1
 
-    Unregister-Event -SourceIdentifier PaneChanged -ErrorAction Ignore
-    Remove-Event -SourceIdentifier PaneChanged -ErrorAction Ignore
-   
-    $null = Register-ObjectEvent -InputObject $psISE.CurrentPowerShellTab.ConsolePane -EventName PropertyChanged -Action $Script:Action -MaxTriggerCount 1 -SourceIdentifier PaneChanged
+    Unregister-Event -SourceIdentifier $EventSplat.SourceIdentifier -ErrorAction Ignore
+    Remove-Event -SourceIdentifier $EventSplat.SourceIdentifier -ErrorAction Ignore
+
+
+    $null = Register-ObjectEvent @EventSplat
 }
