@@ -1,7 +1,7 @@
 @{
     Description          = 'A lightweight implementation of PSReadLine for ISE. Provides bck-i-search functionality.'
     ModuleVersion        = '0.1.0'
-    HelpInfoURI          = 'https://github.com/fsackur/PSISEReadline'
+    HelpInfoURI          = 'https://pages.github.com/fsackur/PSISEReadline'
 
 
     Author               = 'Freddie Sackur'
