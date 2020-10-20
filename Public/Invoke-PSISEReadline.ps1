@@ -67,28 +67,9 @@ function Invoke-PSISEReadline
     #$MyInvocation | Out-String | Write-Host -ForegroundColor Green
     
     
-    $Action = {
-        #$args | Out-string | Write-Host -ForegroundColor Green
-        # $eventargs | Out-string | Write-Host -ForegroundColor Green
-        #'foo' | Out-string | Write-Host -ForegroundColor Green
-        Rename-Item Function:\_prompt prompt -Force
-    }
-    $null = Register-EngineEvent -SourceIdentifier PowerShell.OnIdle -MaxTriggerCount 1 -Action {
-        # Rename-Item Function:\_prompt prompt -Force
-        Set-Item function:\global:prompt
-        $psISE.CurrentPowerShellTab.ConsolePane.InputText = 'foo'
-    }
-    Copy-Item Function:\prompt Function:\_prompt
+    $null = Register-EngineEvent -SourceIdentifier PowerShell.OnIdle -MaxTriggerCount 1 -Action {Set-Item Function:\Global:prompt $_BCK_PROMPT -Force}
+    $Global:_BCK_PROMPT = (gcm prompt).Definition   # Needs to be .Definition; otherwsie, the value changes as we change the prompt command
     function Global:prompt {"`b`b`b`b"}
-    # function prompt {"PS $($executionContext.SessionState.Path.CurrentLocation)$('>' * ($nestedPromptLevel + 1)) "}
-
-
-    #$Global:i = $MyInvocation
-    break
-
-    $Invocation = $MyInvocation.InvocationName
-    $CommandLine = (Get-History $MyInvocation.HistoryId).CommandLine
-    $Global:i = $CommandLine -replace "^$([regex]::Escape($Invocation)) +"
 
     break
 }
