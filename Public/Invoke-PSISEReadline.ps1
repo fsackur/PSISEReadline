@@ -69,6 +69,10 @@ function Invoke-PSISEReadline
     $null = Register-EngineEvent -SourceIdentifier PowerShell.OnIdle -MaxTriggerCount 1 -Action {Set-Item Function:\Global:prompt $_BCK_PROMPT -Force}
     $Global:_BCK_PROMPT = (gcm prompt).Definition   # Needs to be .Definition; otherwsie, the value changes as we change the prompt command
     function Global:prompt {"`b`b`b`b"}
+    #
+    # Could also try mucking about with:
+    # $PS = [powershell]::Create([Management.Automation.RunspaceMode]::CurrentRunspace)
+    # Register-ObjectEvent -InputObject $PS -Action {Write-Host 'foo'} -EventName InvocationStateChanged
 
     # How to set an unusual function name
     # Set-Item function:\> {"My invocation is: $($MyInvocation.InvocationName)"}
