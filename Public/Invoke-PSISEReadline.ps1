@@ -3,7 +3,7 @@ function Invoke-PSISEReadline
     [CmdletBinding()]
     param
     (
-        [Parameter(Mandatory, Position = 0)]
+        [Parameter(Position = 0)]
         [AllowNull()]
         $SearchString,
 
@@ -56,15 +56,14 @@ function Invoke-PSISEReadline
 
     # $psISE.CurrentPowerShellTab.ConsolePane.InputText
 
-    <#
+    
+    # If user hit shortcut with test in the buffer, capture it
     $ConsolePane = $psISE.CurrentPowerShellTab.ConsolePane
     $PaneType = $ConsolePane.GetType()
     $Field = $PaneType.GetField('inputTextBeforeExecution', 'nonpublic,instance')
     $InputTextBeforeExecution = $Field.GetValue($ConsolePane)
-    $Global:i = $InputTextBeforeExecution
-    # THis doesn't work; inputtextbefore is empty. Presumably it is only populated by ISE's favoured children.
-    #>
-    #$MyInvocation | Out-String | Write-Host -ForegroundColor Green
+    $Global:_BCK_SEARCH_STRING = $InputTextBeforeExecution
+    
     
     
     $null = Register-EngineEvent -SourceIdentifier PowerShell.OnIdle -MaxTriggerCount 1 -Action {Set-Item Function:\Global:prompt $_BCK_PROMPT -Force}

@@ -4,8 +4,8 @@ function Register-PSISEReadlineShortcut
     $MenuItemName = "bck-i-search"
 
     # place text in the input buffer, ready for tab-completion
-    #$Action = {bck-i-search}
-    $Action = {$psISE.CurrentPowerShellTab.ConsolePane.InputText = "bck-i-search "}
+    $Action = {bck-i-search}
+    #$Action = {$psISE.CurrentPowerShellTab.ConsolePane.InputText = "bck-i-search "}
 
 
     # Clear existing entries of our command
