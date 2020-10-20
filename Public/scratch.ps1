@@ -1,3 +1,5 @@
+return
+
 $Script:Action = {
 
     # Persist search criteria between PropertyChanged events
