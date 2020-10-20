@@ -64,19 +64,36 @@ function Invoke-PSISEReadline
     $InputTextBeforeExecution = $Field.GetValue($ConsolePane)
     $Global:_BCK_SEARCH_STRING = $InputTextBeforeExecution
     
-    
-    
-    $null = Register-EngineEvent -SourceIdentifier PowerShell.OnIdle -MaxTriggerCount 1 -Action {Set-Item Function:\Global:prompt $_BCK_PROMPT -Force}
-    $Global:_BCK_PROMPT = (gcm prompt).Definition   # Needs to be .Definition; otherwsie, the value changes as we change the prompt command
-    function Global:prompt {"`b`b`b`b"}
-    #
-    # Could also try mucking about with:
-    # $PS = [powershell]::Create([Management.Automation.RunspaceMode]::CurrentRunspace)
-    # Register-ObjectEvent -InputObject $PS -Action {Write-Host 'foo'} -EventName InvocationStateChanged
 
-    # How to set an unusual function name
-    # Set-Item function:\> {"My invocation is: $($MyInvocation.InvocationName)"}
-    # Outputs: My invocation is: >
+    $CleanupAction = {
+        $FuncName = '>'
+        Remove-Item function:\Global:$FuncName
+        if ($_BCK_PROMPT.ToString().Trim()) {Set-Item Function:\Global:prompt $_BCK_PROMPT -Force}
+    }
+    
+    $FuncName = '>'
+    if ($MyInvocation.InvocationName -eq $FuncName)
+    {
+        $null = Unregister-Event PowerShell.OnIdle -ErrorAction SilentlyContinue
+        & $CleanupAction
+    }
+    else
+    {
+        $null = Register-EngineEvent -SourceIdentifier PowerShell.OnIdle -MaxTriggerCount 1 -Action $CleanupAction #-SourceIdentifier _BCK_I_SEARCH_CLEANUP
+        $Global:_BCK_PROMPT = (gcm prompt).Definition   # Needs to be .Definition; otherwise, the value changes as we change the prompt command
+        function Global:prompt {"`b`b`b`b"}
+
+        Set-Item function:\Global:$FuncName $MyInvocation.MyCommand.ScriptBlock
+        $ConsolePane.InputText = "$FuncName $_BCK_SEARCH_STRING"
+    }
+    
+
+    $FoundHistory = "$SearchString $Remainder".Trim()
+    Write-Host $FoundHistory -ForegroundColor Green
+    $SearchString | Out-String | Write-Host -ForegroundColor Yellow
+    $Remainder | Out-String | Write-Host -ForegroundColor Cyan
+
+
 
     break
 }

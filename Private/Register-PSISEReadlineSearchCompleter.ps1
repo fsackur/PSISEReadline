@@ -1,6 +1,6 @@
 function Register-PSISEReadlineSearchCompleter
 {
-    Register-ArgumentCompleter -CommandName Invoke-PSISEReadline -ParameterName SearchString -ScriptBlock {
+    Register-ArgumentCompleter -CommandName Invoke-PSISEReadline, '>' -ParameterName SearchString -ScriptBlock {
         param
         (
             $commandName,
@@ -22,6 +22,8 @@ function Register-PSISEReadlineSearchCompleter
         $History = $History | where {$UniqueHistory.Add($_)}
 
         # return matching
-        $History -like "*$wordToComplete*"
+        $GLOBAL:_BCK_MATCH = $History -like "*$wordToComplete*"
+        #"$wordToComplete`r`n$Completion"
+        $_BCK_MATCH
     }
 }
