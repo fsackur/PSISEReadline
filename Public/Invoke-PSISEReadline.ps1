@@ -71,5 +71,9 @@ function Invoke-PSISEReadline
     $Global:_BCK_PROMPT = (gcm prompt).Definition   # Needs to be .Definition; otherwsie, the value changes as we change the prompt command
     function Global:prompt {"`b`b`b`b"}
 
+    # How to set an unusual function name
+    # Set-Item function:\> {"My invocation is: $($MyInvocation.InvocationName)"}
+    # Outputs: My invocation is: >
+
     break
 }
