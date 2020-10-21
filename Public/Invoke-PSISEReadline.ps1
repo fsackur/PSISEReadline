@@ -28,39 +28,77 @@ function Invoke-PSISEReadline
 
         if ($Global:Debug)
         {
-            $EventArgs | ft | Out-string | Write-Host -ForegroundColor Yellow -NoNewline
+            $null = $Global:KeyHistory.Add($EventArgs)
         }
 
-        
+
         $Char = $ShouldExit = $ShouldInvoke = $null
         switch ($KeyData)
         {
-            'C, Control' {$ShouldExit = $true; break}
-            'Escape' {$ShouldExit = $true; break}
-            'Return' {$ShouldExit = $true; $ShouldInvoke = $true; break}
-            'left'   {$ShouldExit = $true; break}
-            'right' {$ShouldExit = $true; break}
-            'up'     {$ShouldExit = $true; break}
-            'down'    {$ShouldExit = $true; break}
-            'back'  {$Global:_BCK_I_SEARCH = $Global:_BCK_I_SEARCH.Substring(0, ($Global:_BCK_I_SEARCH-1)); break}
-            Default {$Global:_BCK_I_SEARCH += $Char = $_.ToString().ToLower()}
+            $null           {break}
+            'C, Control'    {$ShouldExit = $true; break}
+            'Escape'        {$ShouldExit = $true; break}
+            'Return'        {$ShouldExit = $true; $ShouldInvoke = $true; break}
+            'left'          {$ShouldExit = $true; break}
+            'right'         {$ShouldExit = $true; break}
+            'up'            {$ShouldExit = $true; break}
+            'down'          {$ShouldExit = $true; break}
+            'space'         {$Global:_BCK_I_SEARCH += ' '; break}
+            'back'
+            {
+                if (-not $Global:_BCK_I_SEARCH) {break}
+                $Global:_BCK_I_SEARCH = $Global:_BCK_I_SEARCH.Substring(0, ($Global:_BCK_I_SEARCH.Length-1))
+                break
+            }
+            Default
+            {
+                if ($_.ToString().Length -gt 1) {break}
+                $Global:_BCK_I_SEARCH += $Char = $_.ToString().ToLower()
+            }
         }
+
+        $FoundCommand = $Global:History -like "*$Global:_BCK_I_SEARCH*" | select -First 1
 
         if ($ShouldExit)
         {
-            $psISE.CurrentPowerShellTab.ConsolePane.InputText = ""
+            if ($ShouldInvoke)
+            {
+                $psISE.CurrentPowerShellTab.ConsolePane.InputText = $FoundCommand
+            }
+            else
+            {
+                $psISE.CurrentPowerShellTab.ConsolePane.InputText = ""
+            }
+
             Unregister-Event -SourceIdentifier 'bck-i-search' -ErrorAction SilentlyContinue
-            $prompt
+            & (gmo PSISEReadline | select -First 1) {$HOOK.StopCapturing()}
         }
         else
         {
-            $psISE.CurrentPowerShellTab.ConsolePane.InputText = "bck-i-search: $Global:_BCK_I_SEARCH"
+            $psISE.CurrentPowerShellTab.ConsolePane.InputText = "`r`n$FoundCommand`r`nbck-i-search: $Global:_BCK_I_SEARCH"
         }
-        # $Char | Write-Host -ForegroundColor Green -NoNewline
     }
 
-    
+
+    [string[]]$Global:History = Get-History |
+        sort Id -Descending |
+        select -ExpandProperty CommandLine -First 1000
+
+
+    # Deduplicate - this relies on HashSet.Add returning False when item already in set
+    [System.Collections.Generic.HashSet[string]]$UniqueHistory = @()
+    $Global:History = $Global:History -notmatch '^bck-i-search' |
+        where {$UniqueHistory.Add($_)}
+
+
+    if ($Global:Debug)
+    {
+        $Global:KeyHistory = [System.Collections.ArrayList]::new()
+    }
+
     Unregister-Event -SourceIdentifier 'bck-i-search' -ErrorAction SilentlyContinue
-    $null = Register-ObjectEvent -InputObject $HOOK -EventName KeyDown -SourceIdentifier 'bck-i-search' -MaxTriggerCount 6 -Action $Action
+    $null = Register-ObjectEvent -InputObject $HOOK -EventName KeyDown -SourceIdentifier 'bck-i-search' -Action $Action
     $HOOK.StartCapturing()
+
+    & $Action
 }
